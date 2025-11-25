@@ -4,6 +4,19 @@ set -euo pipefail
 MNTBASE="/mnt/scans"
 mkdir -p "$MNTBASE"
 
+# --- Air-gap safety check ---
+ACTIVE_IPS=$(ip -o addr show up scope global | awk '{print $2": "$4}')
+if [ -n "$ACTIVE_IPS" ]; then
+  echo "Refusing to mount while network interfaces have IP addresses assigned."
+  echo "Detected addresses:"
+  echo "$ACTIVE_IPS"
+  echo
+  echo "Disconnect from all networks to maintain the air-gap, then try again."
+  echo "Press Enter to return to the menu..."
+  read -r
+  exit 1
+fi
+
 # --- Prompt for client info ---
 echo "Enter client ID (e.g. account number or internal code, no spaces recommended):"
 read -rp "Client ID: " CLIENT_ID
