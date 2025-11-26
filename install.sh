@@ -13,6 +13,7 @@ SCRIPTS=(
   "prep_mount.sh"
   "scan_now.sh"
   "eject_cleanup.sh"
+  "full_scan_sequence.sh"
   "update-now.sh"
   "view_last_summary.sh"
 )
