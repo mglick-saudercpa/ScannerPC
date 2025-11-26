@@ -16,16 +16,29 @@ Offline-friendly malware scanning workflow for removable media. These Bash scrip
 - `prep_mount.sh` — prompts for client ID/name, enforces an air-gap check (no active IPs), lists removable unmounted partitions, sets the device read-only, and mounts it at `/mnt/scans/<client>_<timestamp>`.
 - `scan_now.sh` — logs to `/var/log/malware-scans/scan_<client>_<timestamp>.log`, hashes all files for chain-of-custody, runs ClamAV and optional maldet/YARA scans, summarizes results, and can print a barcode label containing the log path.
 - `eject_cleanup.sh` — unmounts the active mount, removes temporary markers, and reminds staff to restore write access if desired.
+- `full_scan_sequence.sh` — orchestrates the prepare → scan → eject steps in one run without stopping for the usual menu pauses.
 - `update-now.sh` — performs OS and signature updates (apt upgrade, freshclam, optional maldet/YARA pulls) when connected to an update network.
 - `view_last_summary.sh` — shows the most recent scan log tail from `/var/log/malware-scans`.
 
 ## Typical workflow
 1. Run `scanner-menu.sh` to open the interactive menu.
 2. Choose **"Update Now"** when on the update VLAN to refresh OS and AV signatures.
-3. Choose **"Prepare & Mount Read-Only"**, enter client details, and select the removable partition.
-4. Choose **"Scan Mounted Media"** to hash and scan the mounted files; optionally print the label.
-5. Choose **"View Last Scan Summary"** to review the latest results.
-6. Choose **"Eject & Clean Up"** before disconnecting the media.
+3. Choose **"Prepare, Scan, and Eject"** to walk through mounting, scanning, and cleanup in one guided sequence.
+4. Choose **"View Last Scan Summary"** to review the latest results.
+
+## Installation
+Use `install.sh` to deploy the scripts to a directory of your choice. Existing copies in the target directory are archived automatically before the new versions are installed, and line endings and permissions are normalized so the scripts can run at startup.
+
+```
+sudo ./install.sh -t /usr/local/bin
+```
+
+Options:
+- `-t <target_dir>` (required): Destination directory for the installed scripts.
+- `-a <archive_dir>` (optional): Where to store archived copies of any existing scripts (defaults to `<target_dir>/archive`).
+- `-h`: Show help.
+
+Note: The installer expects `dos2unix` to be available. Install it from your package manager if it is not already present (for example, `sudo apt-get install dos2unix`).
 
 ## Installation
 Use `install.sh` to deploy the scripts to a directory of your choice. Existing copies in the target directory are archived automatically before the new versions are installed, line endings and permissions are normalized so the scripts can run at startup, and a sudoers entry is added so the scripts can be run without a password. The installer can run from any directory; if it does not find the source scripts alongside it, it will automatically clone `https://github.com/mglick-saudercpa/ScannerPC.git` and install from the freshly downloaded copy.

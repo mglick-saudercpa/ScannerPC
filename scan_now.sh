@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+pause_if_needed() {
+  if [ "${SKIP_PAUSE:-0}" != "1" ]; then
+    echo
+    echo "Press Enter to return to the menu..."
+    read -r
+  fi
+}
+
 LOGDIR="/var/log/malware-scans"
 mkdir -p "$LOGDIR"
 STAMP=$(date -u +"%Y%m%dT%H%M%SZ")
@@ -21,9 +29,7 @@ SUM="$LOGDIR/${BASENAME}.sha256"
 
 if [ ! -f /tmp/scan_mountpoint ]; then
   echo "No mountpoint found. Run 'Prepare & Mount' first."
-  echo
-  echo "Press Enter to return to the menu..."
-  read -r
+  pause_if_needed
   exit 1
 fi
 MNT=$(cat /tmp/scan_mountpoint)
@@ -120,6 +126,4 @@ echo "  Hashes:      $SUM"
 
 print_label "$SCAN_RESULT"
 
-echo
-echo "Press Enter to return to the menu..."
-read -r
+pause_if_needed
