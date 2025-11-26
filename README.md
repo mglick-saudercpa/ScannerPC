@@ -40,6 +40,26 @@ Options:
 
 Note: The installer expects `dos2unix` to be available. Install it from your package manager if it is not already present (for example, `sudo apt-get install dos2unix`).
 
+## Installation
+Use `install.sh` to deploy the scripts to a directory of your choice. Existing copies in the target directory are archived automatically before the new versions are installed, line endings and permissions are normalized so the scripts can run at startup, and a sudoers entry is added so the scripts can be run without a password. The installer can run from any directory; if it does not find the source scripts alongside it, it will automatically clone `https://github.com/mglick-saudercpa/ScannerPC.git` and install from the freshly downloaded copy.
+
+Download the installer directly and make it executable:
+
+```
+curl -LO https://raw.githubusercontent.com/mglick-saudercpa/ScannerPC/main/install.sh
+chmod +x install.sh
+sudo ./install.sh -t /usr/local/bin
+```
+
+Options:
+- `-t <target_dir>` (required): Destination directory for the installed scripts.
+- `-a <archive_dir>` (optional): Where to store archived copies of any existing scripts (defaults to `<target_dir>/archive`).
+- `-h`: Show help.
+
+Notes:
+- The installer expects `dos2unix` to be available. Install it from your package manager if it is not already present (for example, `sudo apt-get install dos2unix`).
+- Sudoers configuration uses `visudo` and writes `/etc/sudoers.d/scannerpc`; you will be prompted for sudo access if needed. The installed scripts are granted passwordless sudo as root.
+
 ## Notes
 - Air-gap safety: `prep_mount.sh` refuses to mount if any network interfaces have IP addresses, prompting the operator to disconnect.
 - Paths for client info and mount state are stored in `/tmp/scan_client_id`, `/tmp/scan_client_name`, and `/tmp/scan_mountpoint` for cross-script coordination.
