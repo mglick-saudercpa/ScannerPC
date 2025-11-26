@@ -56,6 +56,17 @@ if ! command -v dos2unix >/dev/null 2>&1; then
   exit 1
 fi
 
+resolve_path() {
+  local path=$1
+  if command -v realpath >/dev/null 2>&1; then
+    realpath "$path"
+  elif command -v readlink >/dev/null 2>&1; then
+    readlink -f "$path"
+  else
+    (cd "$path" && pwd)
+  fi
+}
+
 update_repo() {
   if [[ ! -d "$SCRIPT_DIR/.git" ]]; then
     echo "Error: $SCRIPT_DIR is not a git repository; cannot update from git." >&2
@@ -78,6 +89,7 @@ if [[ "$UPDATE_FROM_GIT" == true ]]; then
 fi
 
 mkdir -p "$TARGET_DIR"
+TARGET_DIR=$(resolve_path "$TARGET_DIR")
 ARCHIVE_DIR=${ARCHIVE_DIR:-"$TARGET_DIR/archive"}
 
 archive_existing() {
@@ -136,6 +148,22 @@ configure_sudoers() {
   temp_file=$(mktemp)
 
   {
+    cat <<EOF
+# Passwordless sudo for ScannerPC scripts
+# Installed from $SCRIPT_DIR to $TARGET_DIR
+Cmnd_Alias SCANNERPC_CMDS = \
+EOF
+
+    for i in "${!SCRIPTS[@]}"; do
+      local script_path="$TARGET_DIR/${SCRIPTS[$i]}"
+      printf '  %s, \\\n' "$script_path"
+    done
+
+    cat <<EOF
+  $TARGET_DIR/*
+
+ALL ALL=(root) NOPASSWD: SCANNERPC_CMDS
+EOF
     echo "# Passwordless sudo for ScannerPC scripts"
     echo "# Installed from $SCRIPT_DIR to $TARGET_DIR"
     echo -n "ALL ALL=(root) NOPASSWD: "
