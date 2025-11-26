@@ -100,7 +100,50 @@ copy_scripts() {
   done
 }
 
+configure_sudoers() {
+  local sudoers_file="/etc/sudoers.d/scannerpc"
+  local temp_file
+
+  if ! command -v visudo >/dev/null 2>&1; then
+    echo "Error: visudo not found. Install the sudo package before continuing." >&2
+    exit 1
+  fi
+
+  temp_file=$(mktemp)
+
+  {
+    echo "# Passwordless sudo for ScannerPC scripts"
+    echo "# Installed from $SCRIPT_DIR to $TARGET_DIR"
+    echo -n "ALL ALL=(root) NOPASSWD: "
+
+    for i in "${!SCRIPTS[@]}"; do
+      local script_path="$TARGET_DIR/${SCRIPTS[$i]}"
+      if [[ $i -gt 0 ]]; then
+        echo -n ", "
+      fi
+      echo -n "$script_path"
+    done
+
+    echo
+  } >"$temp_file"
+
+  chmod 440 "$temp_file"
+
+  if ! sudo visudo -cf "$temp_file"; then
+    echo "Error: sudoers validation failed; leaving existing sudoers untouched." >&2
+    rm -f "$temp_file"
+    exit 1
+  fi
+
+  sudo cp "$temp_file" "$sudoers_file"
+  sudo chmod 440 "$sudoers_file"
+  rm -f "$temp_file"
+
+  echo "Sudoers updated at $sudoers_file"
+}
+
 archive_existing
 copy_scripts
+configure_sudoers
 
 echo "Installation complete. Scripts installed to $TARGET_DIR"
