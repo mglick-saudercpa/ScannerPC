@@ -27,6 +27,20 @@ Offline-friendly malware scanning workflow for removable media. These Bash scrip
 5. Choose **"View Last Scan Summary"** to review the latest results.
 6. Choose **"Eject & Clean Up"** before disconnecting the media.
 
+## Installation
+Use `install.sh` to deploy the scripts to a directory of your choice. Existing copies in the target directory are archived automatically before the new versions are installed, and line endings and permissions are normalized so the scripts can run at startup.
+
+```
+sudo ./install.sh -t /usr/local/bin
+```
+
+Options:
+- `-t <target_dir>` (required): Destination directory for the installed scripts.
+- `-a <archive_dir>` (optional): Where to store archived copies of any existing scripts (defaults to `<target_dir>/archive`).
+- `-h`: Show help.
+
+Note: The installer expects `dos2unix` to be available. Install it from your package manager if it is not already present (for example, `sudo apt-get install dos2unix`).
+
 ## Notes
 - Air-gap safety: `prep_mount.sh` refuses to mount if any network interfaces have IP addresses, prompting the operator to disconnect.
 - Paths for client info and mount state are stored in `/tmp/scan_client_id`, `/tmp/scan_client_name`, and `/tmp/scan_mountpoint` for cross-script coordination.
