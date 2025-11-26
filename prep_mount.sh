@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+pause_if_needed() {
+  if [ "${SKIP_PAUSE:-0}" != "1" ]; then
+    echo
+    echo "Press Enter to return to the menu..."
+    read -r
+  fi
+}
+
 MNTBASE="/mnt/scans"
 mkdir -p "$MNTBASE"
 
@@ -12,8 +20,7 @@ if [ -n "$ACTIVE_IPS" ]; then
   echo "$ACTIVE_IPS"
   echo
   echo "Disconnect from all networks to maintain the air-gap, then try again."
-  echo "Press Enter to return to the menu..."
-  read -r
+  pause_if_needed
   exit 1
 fi
 
@@ -45,9 +52,7 @@ mapfile -t CANDIDATES < <(
 if [ "${#CANDIDATES[@]}" -eq 0 ]; then
   echo "No removable, unmounted partitions found."
   echo "Insert a USB or external drive and try again."
-  echo
-  echo "Press Enter to return to the menu..."
-  read -r
+  pause_if_needed
   exit 1
 fi
 
@@ -85,6 +90,4 @@ fi
 echo "Mounted $DEV at $MNT (read-only)."
 echo "$MNT" > /tmp/scan_mountpoint
 
-echo
-echo "Press Enter to return to the menu..."
-read -r
+pause_if_needed
