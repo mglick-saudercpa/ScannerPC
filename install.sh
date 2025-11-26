@@ -20,22 +20,25 @@ SCRIPTS=(
 
 usage() {
   cat <<USAGE
-Usage: $0 -t <target_dir> [-a <archive_dir>]
+Usage: $0 -t <target_dir> [-a <archive_dir>] [-g]
 
   -t  Destination directory to install the scripts into (required).
   -a  Directory to store archived copies of any existing installed scripts.
       Defaults to <target_dir>/archive.
+  -g  Update this repository from git before installing (requires git and a clone).
   -h  Show this help message.
 USAGE
 }
 
 TARGET_DIR=""
 ARCHIVE_DIR=""
+UPDATE_FROM_GIT=false
 
-while getopts ":t:a:h" opt; do
+while getopts ":t:a:gh" opt; do
   case "$opt" in
     t) TARGET_DIR=$OPTARG ;;
     a) ARCHIVE_DIR=$OPTARG ;;
+    g) UPDATE_FROM_GIT=true ;;
     h) usage; exit 0 ;;
     :) echo "Option -$OPTARG requires an argument" >&2; usage; exit 1 ;;
     *) echo "Unknown option: -$OPTARG" >&2; usage; exit 1 ;;
@@ -63,6 +66,27 @@ resolve_path() {
     (cd "$path" && pwd)
   fi
 }
+
+update_repo() {
+  if [[ ! -d "$SCRIPT_DIR/.git" ]]; then
+    echo "Error: $SCRIPT_DIR is not a git repository; cannot update from git." >&2
+    exit 1
+  fi
+
+  if ! command -v git >/dev/null 2>&1; then
+    echo "Error: git is not installed. Install git or run without -g." >&2
+    exit 1
+  fi
+
+  local current_branch
+  current_branch=$(git -C "$SCRIPT_DIR" rev-parse --abbrev-ref HEAD)
+  echo "Updating repository from origin/$current_branch..."
+  git -C "$SCRIPT_DIR" pull --ff-only origin "$current_branch"
+}
+
+if [[ "$UPDATE_FROM_GIT" == true ]]; then
+  update_repo
+fi
 
 mkdir -p "$TARGET_DIR"
 TARGET_DIR=$(resolve_path "$TARGET_DIR")
@@ -140,6 +164,19 @@ EOF
 
 ALL ALL=(root) NOPASSWD: SCANNERPC_CMDS
 EOF
+    echo "# Passwordless sudo for ScannerPC scripts"
+    echo "# Installed from $SCRIPT_DIR to $TARGET_DIR"
+    echo -n "ALL ALL=(root) NOPASSWD: "
+
+    for i in "${!SCRIPTS[@]}"; do
+      local script_path="$TARGET_DIR/${SCRIPTS[$i]}"
+      if [[ $i -gt 0 ]]; then
+        echo -n ", "
+      fi
+      echo -n "$script_path"
+    done
+
+    echo
   } >"$temp_file"
 
   chmod 440 "$temp_file"
